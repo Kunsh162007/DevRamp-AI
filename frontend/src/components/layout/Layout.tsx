@@ -18,6 +18,12 @@ export default function Layout() {
 
   return (
     <div style={{ display: 'flex' }}>
+      {/* Aurora Background */}
+      <div className="aurora-bg">
+        <div className="aurora-orb aurora-orb-1" />
+        <div className="aurora-orb aurora-orb-2" />
+        <div className="aurora-orb aurora-orb-3" />
+      </div>
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-logo">

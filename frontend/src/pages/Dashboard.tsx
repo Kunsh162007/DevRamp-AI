@@ -47,7 +47,7 @@ export default function Dashboard() {
       </div>
 
       {/* IBM Bob Banner */}
-      <div style={{
+      <div className="bob-banner" style={{
         padding: '16px 20px', marginBottom: 28,
         background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))',
         border: '1px solid rgba(99,102,241,0.25)', borderRadius: 'var(--radius-lg)',
@@ -64,8 +64,8 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid-4 mb-6">
-        {statCards.map(({ label, value, icon: Icon, color, bg, suffix }) => (
-          <div key={label} className="stat-card animate-fade-in">
+        {statCards.map(({ label, value, icon: Icon, color, bg, suffix }, i) => (
+          <div key={label} className={`stat-card animate-fade-in stagger-${i + 1}`}>
             <div className="flex items-center justify-between mb-4">
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</span>
               <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -115,8 +115,8 @@ export default function Dashboard() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {repos.map((repo: any) => (
-                <div key={repo.id} className="glass-card" style={{ padding: '16px 20px', cursor: 'pointer' }}
-                  onClick={() => navigate(`/explorer/${repo.id}`)}>
+                <div key={repo.id} className="glass-card repo-card" style={{ padding: '16px 20px', cursor: 'pointer' }}
+                  onClick={() => navigate(`/explorer/${repo.id}`)}>  
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div style={{
