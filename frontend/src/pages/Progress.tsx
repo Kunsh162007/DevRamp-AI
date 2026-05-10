@@ -8,7 +8,7 @@ export default function Progress() {
   
   const { data: dash, isLoading } = useQuery({
     queryKey: ['dashboard'],
-    queryFn: async () => (await api.get('/api/analytics/dashboard')).data,
+    queryFn: async () => (await api.get('/analytics/dashboard')).data,
   })
 
   if (isLoading) return <div className="spinner" style={{ margin: '100px auto' }} />

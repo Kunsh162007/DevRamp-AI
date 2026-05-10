@@ -17,7 +17,7 @@ export default function Login() {
     e.preventDefault()
     setLoading(true); setError('')
     try {
-      const { data } = await api.post('/api/auth/login', { email, password })
+      const { data } = await api.post('/auth/login', { email, password })
       setAuth(data.user, data.token)
       navigate('/dashboard')
     } catch (err: any) {

@@ -11,7 +11,7 @@ export default function Explorer() {
 
   const { data: repos = [] } = useQuery({
     queryKey: ['repositories'],
-    queryFn: async () => (await api.get('/api/repositories')).data,
+    queryFn: async () => (await api.get('/repositories')).data,
   })
 
   const { data: repo, isLoading } = useQuery({

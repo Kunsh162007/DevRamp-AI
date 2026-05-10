@@ -34,7 +34,7 @@ export default function AIMentor() {
 
   const { data: repos = [] } = useQuery({
     queryKey: ['repositories'],
-    queryFn: async () => (await api.get('/api/repositories')).data,
+    queryFn: async () => (await api.get('/repositories')).data,
   })
 
   const { data: repo } = useQuery({

@@ -14,7 +14,7 @@ export default function ConnectRepoModal({ onClose, onSuccess }: Props) {
   const qc = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async () => (await api.post('/api/repositories', { url, branch })).data,
+    mutationFn: async () => (await api.post('/repositories', { url, branch })).data,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['repositories'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })

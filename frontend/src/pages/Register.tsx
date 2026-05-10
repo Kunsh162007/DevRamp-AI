@@ -24,7 +24,7 @@ export default function Register() {
   const handleSubmit = async () => {
     setLoading(true); setError('')
     try {
-      const { data } = await api.post('/api/auth/register', { name, email, password, level })
+      const { data } = await api.post('/auth/register', { name, email, password, level })
       setAuth(data.user, data.token)
       navigate('/dashboard')
     } catch (err: any) {

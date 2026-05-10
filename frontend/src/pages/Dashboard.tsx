@@ -14,12 +14,12 @@ export default function Dashboard() {
 
   const { data: dash, isLoading, refetch } = useQuery({
     queryKey: ['dashboard'],
-    queryFn: async () => (await api.get('/api/analytics/dashboard')).data,
+    queryFn: async () => (await api.get('/analytics/dashboard')).data,
   })
 
   const { data: repos = [] } = useQuery({
     queryKey: ['repositories'],
-    queryFn: async () => (await api.get('/api/repositories')).data,
+    queryFn: async () => (await api.get('/repositories')).data,
   })
 
   const stats = dash?.stats || {}
