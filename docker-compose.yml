@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: devramp-postgres
+    environment:
+      POSTGRES_USER: devramp
+      POSTGRES_PASSWORD: devramp123
+      POSTGRES_DB: devramp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devramp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: devramp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devramp-backend
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://devramp:devramp123@postgres:5432/devramp
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
+      BOB_SERVICE_URL: http://bob-service:8000
+      PORT: 3001
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  bob-service:
+    build:
+      context: ./bob-service
+      dockerfile: Dockerfile
+    container_name: devramp-bob-service
+    ports:
+      - "8000:8000"
+    environment:
+      BOB_API_URL: ${BOB_API_URL}
+      BOB_API_KEY: ${BOB_API_KEY}
+      REDIS_URL: redis://redis:6379
+      PORT: 8000
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./bob-service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: devramp-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: devramp-network
+
+# Made with Bob
