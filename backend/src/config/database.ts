@@ -1,12 +1,13 @@
 import { PrismaClient } from '@prisma/client';
-import { logger } from './logger';
+
+const logger = console;
 
 // Singleton pattern for Prisma Client
-let prisma: PrismaClient;
+let prismaInstance: PrismaClient;
 
 export const getPrismaClient = (): PrismaClient => {
-  if (!prisma) {
-    prisma = new PrismaClient({
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient({
       log: [
         { level: 'query', emit: 'event' },
         { level: 'error', emit: 'event' },
@@ -16,30 +17,30 @@ export const getPrismaClient = (): PrismaClient => {
 
     // Log queries in development
     if (process.env.NODE_ENV === 'development') {
-      prisma.$on('query' as never, (e: any) => {
+      prismaInstance.$on('query' as never, (e: any) => {
         logger.debug('Query: ' + e.query);
         logger.debug('Duration: ' + e.duration + 'ms');
       });
     }
 
     // Log errors
-    prisma.$on('error' as never, (e: any) => {
+    prismaInstance.$on('error' as never, (e: any) => {
       logger.error('Prisma Error:', e);
     });
 
     // Log warnings
-    prisma.$on('warn' as never, (e: any) => {
+    prismaInstance.$on('warn' as never, (e: any) => {
       logger.warn('Prisma Warning:', e);
     });
   }
 
-  return prisma;
+  return prismaInstance;
 };
 
 // Graceful shutdown
 export const disconnectDatabase = async (): Promise<void> => {
-  if (prisma) {
-    await prisma.$disconnect();
+  if (prismaInstance) {
+    await prismaInstance.$disconnect();
     logger.info('Database disconnected');
   }
 };
@@ -57,5 +58,6 @@ export const checkDatabaseHealth = async (): Promise<boolean> => {
 };
 
 export default getPrismaClient;
+export const prisma = getPrismaClient();
 
 // Made with Bob

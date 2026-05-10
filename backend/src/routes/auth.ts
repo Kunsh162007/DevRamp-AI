@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { body, validationResult } from 'express-validator'
-import { prisma } from '../index'
+import { prisma } from '../config/database'
 import { authenticate, AuthRequest } from '../middleware/auth'
 
 const router = Router()
@@ -43,7 +43,7 @@ router.post(
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET || 'dev-secret-key',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        { expiresIn: (process.env.JWT_EXPIRES_IN as any) || '7d' }
       )
 
       res.status(201).json({ user, token })
@@ -83,7 +83,7 @@ router.post(
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET || 'dev-secret-key',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        { expiresIn: (process.env.JWT_EXPIRES_IN as any) || '7d' }
       )
 
       const { password: _, ...userSafe } = user

@@ -21,6 +21,9 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm test
+        env:
+          DATABASE_URL: postgres://test:test@localhost:5432/test
+          JWT_SECRET: dev-secret-key
 
   frontend-tests:
     runs-on: ubuntu-latest
