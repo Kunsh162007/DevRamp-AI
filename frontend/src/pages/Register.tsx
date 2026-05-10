@@ -58,7 +58,7 @@ export default function Register() {
 
       {/* Left Panel — Branding */}
       <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
         padding: '60px 80px', position: 'relative',
       }}>
         {/* Logo */}
@@ -117,7 +117,7 @@ export default function Register() {
 
       {/* Right Panel — Auth Card */}
       <div style={{
-        width: 480, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 480, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 40, borderLeft: '1px solid var(--border-subtle)',
         background: 'rgba(13,21,40,0.6)', backdropFilter: 'blur(20px)',
       }}>

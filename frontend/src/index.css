@@ -860,6 +860,7 @@ code, pre {
 
 .code-ticker {
   overflow: hidden;
+  max-width: 100%;
   padding: 8px 0;
   border-top: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
