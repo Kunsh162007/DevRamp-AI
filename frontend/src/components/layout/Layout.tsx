@@ -59,7 +59,7 @@ export default function Layout() {
               {user?.name?.[0]?.toUpperCase() || 'U'}
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, truncate: true }}>{user?.name}</div>
+              <div className="truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name}</div>
               <div className="flex items-center gap-2" style={{ marginTop: 2 }}>
                 <Zap size={10} style={{ color: 'var(--accent-amber)' }} />
                 <span style={{ fontSize: '0.7rem', color: 'var(--accent-amber)' }}>{user?.xp || 0} XP</span>

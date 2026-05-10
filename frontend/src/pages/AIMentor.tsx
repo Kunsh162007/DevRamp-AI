@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Send, Cpu, MessageSquare, Code2, Lightbulb, ChevronRight, Copy, Check } from 'lucide-react'
+import { Send, Cpu, Code2, Lightbulb, ChevronRight, Copy, Check } from 'lucide-react'
 import api from '../services/api'
-import ReactMarkdown from 'react-markdown'
 
 interface Message {
   id: string

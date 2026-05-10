@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Trophy, Zap, Clock, CheckCircle2, TrendingUp } from 'lucide-react'
+import { Trophy, Zap, Clock, CheckCircle2 } from 'lucide-react'
 import api from '../services/api'
 import { useAuthStore } from '../stores/authStore'
 

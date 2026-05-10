@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Folder, File, Cpu, Network, LayoutTemplate, Braces, Package, FileCode2 } from 'lucide-react'
+import { Cpu, Network, LayoutTemplate, Braces, Package, FileCode2 } from 'lucide-react'
 import api from '../services/api'
 
 export default function Explorer() {

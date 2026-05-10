@@ -1,13 +1,12 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { BookOpen, CheckCircle2, PlayCircle, Trophy, Brain, Cpu, ArrowRight } from 'lucide-react'
+import { CheckCircle2, PlayCircle, Trophy, Brain, Cpu, ArrowRight } from 'lucide-react'
 import api from '../services/api'
 import ReactMarkdown from 'react-markdown'
 
 export default function Learning() {
   const { repoId } = useParams()
-  const navigate = useNavigate()
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null)
 
   const { data: paths = [] } = useQuery({

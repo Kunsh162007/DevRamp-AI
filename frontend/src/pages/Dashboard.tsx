@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
-  GitBranch, Clock, BookOpen, Zap, TrendingUp, Plus,
+  GitBranch, Clock, TrendingUp, Plus,
   Cpu, CheckCircle2, AlertCircle, Loader2, ArrowRight, Users
 } from 'lucide-react'
 import api from '../services/api'
