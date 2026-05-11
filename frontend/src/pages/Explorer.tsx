@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Cpu, Network, LayoutTemplate, Braces, Package, FileCode2 } from 'lucide-react'
+import { Cpu, Network, LayoutTemplate, Braces, Package, FileCode2, Loader2, AlertCircle, ArrowLeft } from 'lucide-react'
 import api from '../services/api'
 
 export default function Explorer() {
@@ -14,10 +14,15 @@ export default function Explorer() {
     queryFn: async () => (await api.get('/repositories')).data,
   })
 
-  const { data: repo, isLoading } = useQuery({
+  const { data: repo, isLoading, error } = useQuery({
     queryKey: ['repository', repoId],
-    queryFn: async () => (await api.get(`/api/repositories/${repoId}`)).data,
+    queryFn: async () => {
+      if (!repoId) throw new Error('No repository ID')
+      const res = await api.get(`/repositories/${repoId}`)
+      return res.data
+    },
     enabled: !!repoId,
+    retry: 2,
   })
 
   if (!repoId) {
@@ -31,17 +36,88 @@ export default function Explorer() {
         <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
           IBM Bob's Context Awareness engine has mapped the architecture, components, and dependencies.
         </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           {repos.filter((r: any) => r.status === 'READY').map((r: any) => (
             <button key={r.id} className="btn btn-secondary" onClick={() => navigate(`/explorer/${r.id}`)}>
               {r.name}
             </button>
           ))}
+          {repos.filter((r: any) => r.status === 'READY').length === 0 && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+              No repositories ready yet. Connect a repository from the dashboard.
+            </p>
+          )}
         </div>
       </div>
     )
   }
 
+  // Handle error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center', maxWidth: 400 }}>
+          <AlertCircle size={48} style={{ color: 'var(--accent-rose)', margin: '0 auto 16px' }} />
+          <h3 style={{ marginBottom: 8 }}>Failed to load repository</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 24, fontSize: '0.875rem' }}>
+            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          </p>
+          <button className="btn btn-primary" onClick={() => navigate('/dashboard')}>
+            <ArrowLeft size={16} /> Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle analyzing state
+  if (repo?.status === 'ANALYZING') {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center', maxWidth: 400 }}>
+          <Loader2 size={48} style={{ color: 'var(--brand-primary)', margin: '0 auto 16px' }} className="animate-spin" />
+          <h3 style={{ marginBottom: 8 }}>Analyzing Repository</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 24, fontSize: '0.875rem' }}>
+            IBM Bob is analyzing your codebase. This may take a few minutes...
+          </p>
+          <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>
+            <ArrowLeft size={16} /> Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle error state from repository
+  if (repo?.status === 'ERROR') {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center', maxWidth: 400 }}>
+          <AlertCircle size={48} style={{ color: 'var(--accent-rose)', margin: '0 auto 16px' }} />
+          <h3 style={{ marginBottom: 8 }}>Analysis Failed</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 24, fontSize: '0.875rem' }}>
+            Failed to analyze repository. Please try again.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                await api.post(`/repositories/${repoId}/analyze`)
+                window.location.reload()
+              }}
+            >
+              Retry Analysis
+            </button>
+            <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>
+              <ArrowLeft size={16} /> Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle loading state
   if (isLoading || !repo) {
     return <div style={{ display: 'flex', justifyContent: 'center', padding: 100 }}><div className="spinner" /></div>
   }

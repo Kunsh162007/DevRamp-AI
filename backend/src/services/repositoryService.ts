@@ -3,160 +3,121 @@ import { prisma, logger } from '../index'
 import { BobService } from './bobService'
 
 export class RepositoryService {
-  /**
-   * Full async analysis pipeline:
-   * 1. Emit "started" websocket event
-   * 2. Call Bob to analyze the repository
-   * 3. Extract components, build dependency graph
-   * 4. Generate learning paths via Bob
-   * 5. Emit "complete" websocket event
-   */
   static async analyzeAsync(
-    repositoryId: string,
+    repoId: string,
     url: string,
     branch: string,
     userId: string,
     io: Server
   ) {
-    const emit = (event: string, data: any) => {
-      io.to(`repo:${repositoryId}`).emit(event, data)
-    }
-
     try {
-      logger.info(`Starting analysis for repo ${repositoryId}`)
-
-      // Mark as analyzing
+      // Update status to ANALYZING
       await prisma.repository.update({
-        where: { id: repositoryId },
+        where: { id: repoId },
         data: { status: 'ANALYZING' },
       })
 
-      emit('analysis:progress', { step: 'started', message: '🔍 Connecting to repository...', percent: 5 })
-      await delay(800)
+      // Emit progress to user
+      io.to(`user:${userId}`).emit('repo:analyzing', { repositoryId: repoId })
 
-      emit('analysis:progress', { step: 'cloning', message: '📥 Reading repository structure...', percent: 15 })
+      logger.info(`Starting analysis for repository ${repoId}`)
 
-      // ── Step 1: Bob analyzes repository ─────────────────────
-      emit('analysis:progress', { step: 'bob_analyzing', message: '🤖 IBM Bob is analyzing your codebase...', percent: 30 })
-
-      const analysis = await BobService.analyzeRepository({ repositoryId, url, branch, userId })
-
-      emit('analysis:progress', { step: 'dependencies', message: '🔗 Building dependency graph...', percent: 55 })
-
-      // Save analysis
-      await prisma.repositoryAnalysis.upsert({
-        where: { repositoryId },
-        create: {
-          repositoryId,
-          complexity: analysis.complexity || 'MEDIUM',
-          fileCount: analysis.fileCount || 0,
-          lineCount: analysis.lineCount || 0,
-          dependencies: analysis.dependencies || [],
-          architecture: analysis.architecture || {},
-          components: analysis.components || [],
-          patterns: analysis.patterns || [],
-        },
-        update: {
-          complexity: analysis.complexity || 'MEDIUM',
-          fileCount: analysis.fileCount || 0,
-          lineCount: analysis.lineCount || 0,
-          dependencies: analysis.dependencies || [],
-          architecture: analysis.architecture || {},
-          components: analysis.components || [],
-          patterns: analysis.patterns || [],
-        },
-      })
-
-      // Update repo metadata
-      await prisma.repository.update({
-        where: { id: repositoryId },
-        data: {
-          language: analysis.language,
-          framework: analysis.framework,
-          description: analysis.description,
-        },
-      })
-
-      emit('analysis:progress', { step: 'learning_paths', message: '📚 Generating personalized learning paths...', percent: 70 })
-
-      // ── Step 2: Bob generates learning path ─────────────────
-      const learningPath = await BobService.generateLearningPath({
-        repositoryId,
-        complexity: analysis.complexity || 'MEDIUM',
-        language: analysis.language || 'JavaScript',
-        difficulty: 'BEGINNER',
+      // Call Bob service for analysis
+      const analysis = await BobService.analyzeRepository({
+        repositoryUrl: url,
+        branch,
         userId,
       })
 
-      emit('analysis:progress', { step: 'saving', message: '💾 Saving learning curriculum...', percent: 85 })
+      logger.info(`Analysis completed for repository ${repoId}`)
 
-      // Save learning path
-      const savedPath = await prisma.learningPath.create({
+      // Save analysis results
+      await prisma.repositoryAnalysis.create({
         data: {
-          repositoryId,
-          title: learningPath.title,
-          description: learningPath.description,
-          difficulty: 'BEGINNER',
-          estimatedHours: learningPath.estimatedHours || 20,
-          isDefault: true,
-          modules: {
-            create: (learningPath.modules || []).map((m: any, idx: number) => ({
-              title: m.title,
-              description: m.description,
-              type: m.type || 'TUTORIAL',
-              content: m.content || '',
-              codeExamples: m.codeExamples || [],
-              quiz: m.quiz || null,
-              challenge: m.challenge || null,
-              estimatedMinutes: m.estimatedMinutes || 30,
-              order: idx,
-            })),
-          },
+          repositoryId: repoId,
+          language: analysis.language || 'Unknown',
+          framework: analysis.framework || 'Unknown',
+          complexity: analysis.complexity || 'MEDIUM',
+          fileCount: analysis.fileCount || 0,
+          lineCount: analysis.lineCount || 0,
+          dependencies: analysis.dependencies || [],
+          architecture: analysis.architecture || {},
+          patterns: analysis.patterns || [],
+          recommendations: analysis.recommendations || [],
         },
       })
 
-      emit('analysis:progress', { step: 'knowledge', message: '📖 Building knowledge base...', percent: 95 })
+      // Update repository with language and status
+      await prisma.repository.update({
+        where: { id: repoId },
+        data: {
+          language: analysis.language,
+          status: 'READY',
+        },
+      })
 
-      // ── Step 3: Seed initial knowledge base ─────────────────
-      if (analysis.components && analysis.components.length > 0) {
-        await BobService.generateDocs({
-          repositoryId,
-          components: analysis.components.slice(0, 5),
+      // Generate learning path automatically
+      try {
+        logger.info(`Generating learning path for repository ${repoId}`)
+        
+        const learningPath = await BobService.generateLearningPath({
+          repositoryId: repoId,
+          complexity: analysis.complexity || 'MEDIUM',
+          language: analysis.language || 'JavaScript',
+          difficulty: 'BEGINNER',
           userId,
         })
+
+        await prisma.learningPath.create({
+          data: {
+            repositoryId: repoId,
+            userId,
+            title: learningPath.title,
+            description: learningPath.description,
+            difficulty: 'BEGINNER',
+            estimatedHours: learningPath.estimatedHours || 40,
+            modules: {
+              create: learningPath.modules.map((mod: any, idx: number) => ({
+                title: mod.title,
+                description: mod.description,
+                content: mod.content || '',
+                order: idx,
+                estimatedMinutes: mod.estimatedMinutes || 60,
+                type: mod.type || 'LESSON',
+              })),
+            },
+          },
+        })
+
+        logger.info(`Learning path created for repository ${repoId}`)
+      } catch (err) {
+        logger.error('Learning path generation failed:', err)
+        // Don't fail the whole analysis if learning path fails
       }
 
-      // Mark complete
-      await prisma.repository.update({
-        where: { id: repositoryId },
-        data: { status: 'READY', analyzedAt: new Date() },
+      // Emit completion
+      io.to(`user:${userId}`).emit('repo:ready', {
+        repositoryId: repoId,
+        analysis,
       })
 
-      emit('analysis:complete', {
-        repositoryId,
-        analysisId: repositoryId,
-        learningPathId: savedPath.id,
-        stats: {
-          fileCount: analysis.fileCount,
-          components: (analysis.components || []).length,
-          modules: (learningPath.modules || []).length,
-        },
-      })
+      logger.info(`Repository ${repoId} analyzed successfully`)
+    } catch (error) {
+      logger.error(`Repository analysis failed for ${repoId}:`, error)
 
-      logger.info(`Analysis complete for repo ${repositoryId}`)
-    } catch (err: any) {
-      logger.error(`Analysis failed for ${repositoryId}: ${err.message}`)
-
+      // Update status to ERROR
       await prisma.repository.update({
-        where: { id: repositoryId },
+        where: { id: repoId },
         data: { status: 'ERROR' },
       })
 
-      emit('analysis:error', { repositoryId, error: err.message })
+      // Emit error
+      io.to(`user:${userId}`).emit('repo:error', {
+        repositoryId: repoId,
+        error: 'Analysis failed',
+      })
     }
   }
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
+// Made with Bob

@@ -1,26 +1,57 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   GitBranch, Clock, TrendingUp, Plus,
   Cpu, CheckCircle2, AlertCircle, Loader2, ArrowRight, Users
 } from 'lucide-react'
-import api from '../services/api'
+import api, { connectWebSocket } from '../services/api'
+import { useAuthStore } from '../stores/authStore'
 import ConnectRepoModal from '../components/dashboard/ConnectRepoModal'
 
 export default function Dashboard() {
   const [showConnect, setShowConnect] = useState(false)
   const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user)
 
   const { data: dash, isLoading, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => (await api.get('/analytics/dashboard')).data,
   })
 
-  const { data: repos = [] } = useQuery({
+  const { data: repos = [], refetch: refetchRepos } = useQuery({
     queryKey: ['repositories'],
     queryFn: async () => (await api.get('/repositories')).data,
   })
+
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    if (!user?.id) return
+
+    const socket = connectWebSocket(user.id)
+
+    socket.on('repo:analyzing', (data: any) => {
+      console.log('📊 Repository analyzing:', data)
+      refetchRepos()
+    })
+
+    socket.on('repo:ready', (data: any) => {
+      console.log('✅ Repository ready:', data)
+      refetchRepos()
+      refetch()
+    })
+
+    socket.on('repo:error', (data: any) => {
+      console.error('❌ Repository error:', data)
+      refetchRepos()
+    })
+
+    return () => {
+      socket.off('repo:analyzing')
+      socket.off('repo:ready')
+      socket.off('repo:error')
+    }
+  }, [user?.id, refetchRepos, refetch])
 
   const stats = dash?.stats || {}
 
