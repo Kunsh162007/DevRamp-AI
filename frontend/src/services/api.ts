@@ -10,9 +10,17 @@ const api = axios.create({
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  // Read from zustand persist storage
+  const authData = localStorage.getItem('devramp-auth')
+  if (authData) {
+    try {
+      const { state } = JSON.parse(authData)
+      if (state?.token) {
+        config.headers.Authorization = `Bearer ${state.token}`
+      }
+    } catch (e) {
+      console.error('Failed to parse auth data:', e)
+    }
   }
   return config
 })
@@ -22,7 +30,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
+      localStorage.removeItem('devramp-auth')
       window.location.href = '/login'
     }
     return Promise.reject(error)
