@@ -121,7 +121,6 @@ router.post('/modules/:id/submit-challenge', async (req: AuthRequest, res: Respo
       code,
       language: language || module.learningPath.repository.language || 'JavaScript',
       context: { moduleTitle: module.title, challenge: module.challenge },
-      userId: req.user!.id,
     })
 
     res.json(review)

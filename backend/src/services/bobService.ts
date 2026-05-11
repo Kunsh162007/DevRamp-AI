@@ -40,7 +40,7 @@ export class BobService {
     complexity: string
     language: string
     difficulty: string
-    userId: string
+    userId?: string
   }) {
     try {
       logger.info(`Generating learning path for repository ${params.repositoryId}`)

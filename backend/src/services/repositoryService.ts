@@ -42,8 +42,8 @@ export class RepositoryService {
           lineCount: analysis.lineCount || 0,
           dependencies: analysis.dependencies || [],
           architecture: analysis.architecture || {},
+          components: analysis.components || [],
           patterns: analysis.patterns || [],
-          recommendations: analysis.recommendations || [],
         },
       })
 
@@ -65,13 +65,11 @@ export class RepositoryService {
           complexity: analysis.complexity || 'MEDIUM',
           language: analysis.language || 'JavaScript',
           difficulty: 'BEGINNER',
-          userId,
         })
 
         await prisma.learningPath.create({
           data: {
             repositoryId: repoId,
-            userId,
             title: learningPath.title,
             description: learningPath.description,
             difficulty: 'BEGINNER',

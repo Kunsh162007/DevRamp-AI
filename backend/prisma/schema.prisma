@@ -78,6 +78,8 @@ enum RepoStatus {
 model RepositoryAnalysis {
   id           String   @id @default(cuid())
   repositoryId String   @unique
+  language     String   @default("Unknown")
+  framework    String   @default("Unknown")
   complexity   Complexity @default(MEDIUM)
   fileCount    Int      @default(0)
   lineCount    Int      @default(0)
