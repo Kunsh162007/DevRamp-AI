@@ -11,6 +11,7 @@ export class BobService {
   }) {
     try {
       logger.info(`Calling Bob service to analyze: ${params.repositoryUrl}`)
+      logger.info(`Bob service URL: ${BOB_SERVICE_URL}`)
       
       const response = await axios.post(
         `${BOB_SERVICE_URL}/analyze`,
@@ -18,9 +19,10 @@ export class BobService {
           repository_url: params.repositoryUrl,
           branch: params.branch,
         },
-        { 
+        {
           timeout: 60000, // 60 second timeout
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          maxRedirects: 0, // Don't follow redirects
         }
       )
 
@@ -28,8 +30,13 @@ export class BobService {
       return response.data
     } catch (error: any) {
       logger.error('Bob analyze error:', error.message)
+      logger.error('Bob service URL used:', `${BOB_SERVICE_URL}/analyze`)
       if (error.response) {
+        logger.error('Bob error status:', error.response.status)
         logger.error('Bob error response:', error.response.data)
+      }
+      if (error.code) {
+        logger.error('Error code:', error.code)
       }
       throw new Error('Repository analysis failed')
     }
